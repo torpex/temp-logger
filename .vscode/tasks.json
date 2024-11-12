@@ -1,0 +1,40 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "PlatformIO",
+			"task": "Build",
+			"problemMatcher": [
+				"$platformio"
+			],
+			"group": "build",
+			"label": "PlatformIO: Build"
+		},
+		{
+			"type": "PlatformIO",
+			"task": "Build (genericSTM32F446RE)",
+			"problemMatcher": [
+				"$platformio"
+			],
+			"group": "build",
+			"label": "PlatformIO: Build (genericSTM32F446RE)"
+		},
+        {
+            "type": "shell",
+            "command": "/Users/camlewis/.platformio/penv/bin/pio",
+            "args": [
+                "test",
+                "-e",
+                "native"
+            ],
+            "problemMatcher": [
+                "$platformio"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "label": "PlatformIO: Test (unit tests)"
+        }
+	]
+}
