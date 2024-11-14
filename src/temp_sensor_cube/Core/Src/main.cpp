@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "Ti_Tmp100.hpp"
+#include "Microchip_24fc.hpp"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +32,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define TEMP_SENSOR_I2C_ADDRESS (0x48) // I2C address when A0-A2 are all tied to ground
+#define EEPROM_I2C_ADDRESS      (0xA0) // I2C address of the EEPROM
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -43,7 +45,8 @@
 I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
-
+Ti_Tmp100 tempSensor;
+Microchip_24FC eeprom;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -91,12 +94,17 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
+  // Init temp sensor (TMP100) and EEPROM (24FC256)
+  tempSensor.init(&hi2c1, TEMP_SENSOR_I2C_ADDRESS);
+  eeprom.init(&hi2c1, EEPROM_I2C_ADDRESS);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    float temperature = tempSensor.readTemperature();
+    HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

@@ -9,7 +9,7 @@ void tearDown(void) {
 void test_temperature_sensor_initialization(void) {
     TEST_ASSERT_EQUAL(0, 0); // Replace with actual test logic
 }
-
+    
 void test_temperature_sensor_reading(void) {
     TEST_ASSERT_EQUAL(25, 25); // Replace with actual test logic
 }
