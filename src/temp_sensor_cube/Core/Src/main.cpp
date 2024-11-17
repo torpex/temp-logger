@@ -2,15 +2,22 @@
 #include "main.h"
 #include "Ti_Tmp100.hpp"
 #include "Microchip_24fc.hpp"
+#include "Logger.hpp"
 
 // Defines
 #define TEMP_SENSOR_I2C_ADDRESS (0x48) // I2C address when A0-A2 are all tied to ground
 #define EEPROM_I2C_ADDRESS      (0xA0) // I2C address of the EEPROM
+#define EEPROM_SIZE             (0x8000) // 256Kbit
+
+#define MS_PER_S                (1000)
+#define SECONDS_PER_MINUTE      (60)
+#define TEN_MINUTES             (10 * SECONDS_PER_MINUTE)
 
 // Variables
 static I2C_HandleTypeDef hi2c1;
 static Ti_Tmp100 tempSensor;
 static Microchip_24FC eeprom;
+static Logger logger;
 
 // Private function prototypes
 static void SystemClock_Config(void);
@@ -23,21 +30,32 @@ int main(void)
   HAL_Init();
 
   // Configure the system clock
-  SystemClock_Config();
+  SystemClock_Config
+  ();
 
   //  Initialize all configured peripherals
   MX_GPIO_Init();
   MX_I2C1_Init();
 
   // Init temp sensor (TMP100) and EEPROM (24FC256)
-  tempSensor.init(&hi2c1, TEMP_SENSOR_I2C_ADDRESS);
-  eeprom.init(&hi2c1, EEPROM_I2C_ADDRESS);
+  tempSensor.Init(&hi2c1, TEMP_SENSOR_I2C_ADDRESS);
+  eeprom.Init(&hi2c1, EEPROM_I2C_ADDRESS, EEPROM_SIZE);
+  logger.Init(&eeprom);
+
+  // Assumptions: EEPROM has been erased at least once - for example, via Logger::EraseAllLogs()
+  ErrorStatus result;
 
   // Infinite loop
   while (1)
   {
-    float temperature = tempSensor.readTemperature();
-    HAL_Delay(1000);
+    // Attempt to read temperature from TMP100
+    if (SUCCESS == tempSensor.ReadTemperature()) {
+      // Save raw temp to EEPROM
+      logger.WriteLogEntry(tempSensor.GetTemperatureRawCounts());
+    }
+
+    // Delay for 10 minutes
+    HAL_Delay(TEN_MINUTES * MS_PER_S);
   }
 }
 

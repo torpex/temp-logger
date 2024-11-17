@@ -6,12 +6,16 @@
 class Ti_Tmp100 {
 public:
     Ti_Tmp100();  // Constructor
-    bool init(I2C_HandleTypeDef* i2cHandle, uint8_t i2cAddress);
-    float readTemperature();
+    ErrorStatus Init(I2C_HandleTypeDef* i2cHandle, uint8_t i2cAddress);
+    ErrorStatus ReadTemperature();
+    int16_t GetTemperatureRawCounts();
+    float GetTemperatureDegC();
+    float RawCountsToDegC(uint16_t rawCounts);
 
 private:
     I2C_HandleTypeDef* _i2cHandle;
     uint8_t _i2cAddress;
+    int16_t _rawTemperature;
 };
 
 #endif // TMP100_HPP
