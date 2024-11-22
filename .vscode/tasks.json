@@ -7,34 +7,40 @@
 			"problemMatcher": [
 				"$platformio"
 			],
+			"args": [
+				"-v"
+			],
 			"group": "build",
 			"label": "PlatformIO: Build"
 		},
 		{
-			"type": "PlatformIO",
-			"task": "Build (genericSTM32F446RE)",
+			"type": "shell",
+			"command": "/Users/camlewis/.platformio/penv/bin/pio",
+			"args": [
+				"test",
+				"-e",
+				"native",
+				"-vvv"
+			],
 			"problemMatcher": [
 				"$platformio"
 			],
-			"group": "build",
-			"label": "PlatformIO: Build (genericSTM32F446RE)"
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"label": "PlatformIO: Test (unit tests)"
 		},
-        {
-            "type": "shell",
-            "command": "/Users/camlewis/.platformio/penv/bin/pio",
-            "args": [
-                "test",
-                "-e",
-                "native"
-            ],
-            "problemMatcher": [
-                "$platformio"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            },
-            "label": "PlatformIO: Test (unit tests)"
-        }
+		{
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"PlatformIO: Build",
+				"PlatformIO: Test (unit tests)"
+			],
+			"problemMatcher": [
+				"$platformio"
+			],
+			"label": "Build and Test"
+		}
 	]
 }

@@ -13,9 +13,9 @@ Microchip_24FC::Microchip_24FC() {
 // Initialize EEPROM device
 // Inputs: I2C handle, device address, and size of the EEPROM
 // Outputs: ErrorStatus (SUCCESS or ERROR)
-ErrorStatus Microchip_24FC::Init(I2C_HandleTypeDef* i2cHandle, uint8_t i2cAddress, uint32_t size) {
+ErrorStatus Microchip_24FC::Init(I2C_HandleTypeDef* i2cHandle, uint8_t address, uint32_t size) {
     _i2cHandle = i2cHandle;
-    _i2cAddress = i2cAddress;
+    _i2cAddress = address << 1; // Shift address left by 1 to make room for R/W bit
     _eepromSize = size;
     return SUCCESS;
 }
