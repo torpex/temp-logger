@@ -8,9 +8,9 @@ public:
     Ti_Tmp100();  // Constructor
     ErrorStatus Init(I2C_HandleTypeDef* i2cHandle, uint8_t i2cAddress);
     ErrorStatus ReadTemperature();
-    int16_t GetTemperatureRawCounts();
+    int16_t GetTemperatureRaw();
     float GetTemperatureDegC();
-    float RawCountsToDegC(uint16_t rawCounts);
+    float ConvertRawTempToDegC(uint16_t rawCounts);
 
 private:
     I2C_HandleTypeDef* _i2cHandle;

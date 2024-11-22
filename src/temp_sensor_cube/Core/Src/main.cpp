@@ -5,9 +5,9 @@
 #include "Logger.hpp"
 
 // Defines
-#define TEMP_SENSOR_I2C_ADDRESS (0x48) // I2C address when A0-A2 are all tied to ground
-#define EEPROM_I2C_ADDRESS      (0xA0) // I2C address of the EEPROM
-#define EEPROM_SIZE             (0x8000) // 256Kbit
+#define TEMP_SENSOR_I2C_ADDRESS (0x48)   // I2C address when A0-A2 are all tied to ground
+#define EEPROM_I2C_ADDRESS      (0xA0)   // I2C address of the EEPROM
+#define EEPROM_SIZE             (0x8000) // 256Kbit EEPROM
 
 #define MS_PER_S                (1000)
 #define SECONDS_PER_MINUTE      (60)
@@ -18,6 +18,7 @@ static I2C_HandleTypeDef hi2c1;
 static Ti_Tmp100 tempSensor;
 static Microchip_24FC eeprom;
 static Logger logger;
+static ErrorStatus result;
 
 // Private function prototypes
 static void SystemClock_Config(void);
@@ -42,8 +43,16 @@ int main(void)
   eeprom.Init(&hi2c1, EEPROM_I2C_ADDRESS, EEPROM_SIZE);
   logger.Init(&eeprom);
 
-  // Assumptions: EEPROM has been erased at least once - for example, via Logger::EraseAllLogs()
-  ErrorStatus result;
+  // Assumptions:
+  // 1) TMP100 address lines ADD0 and ADD1 are tied to ground, so the I2C address is 0b01001000 (0x48)
+  // 2) 24FC address lines A0, A1, and A2 are tied to ground, so the I2C address is 0b10100000 (0xA0)
+  // 3) 24FC write protect line (WP) is tied to ground enable writing.
+  // 4) Appropriate pull up on SDA line (2k-10k ohm)
+
+  // Notes:
+  // 1) Temperature is logged in raw counts (12-bit resolution) as a uint16_t to save space (vs a 32 bit float)
+  // 2) Power cycles will cause logging to resume at the next available address in EEPROM (RTC would be needed to track time)
+  // 3) Simple HAL delay used to keep code simple, but would use an RTOS or timer interrupt in a real application
 
   // Infinite loop
   while (1)
@@ -51,7 +60,7 @@ int main(void)
     // Attempt to read temperature from TMP100
     if (SUCCESS == tempSensor.ReadTemperature()) {
       // Save raw temp to EEPROM
-      logger.WriteLogEntry(tempSensor.GetTemperatureRawCounts());
+      logger.WriteLogEntry(tempSensor.GetTemperatureRaw());
     }
 
     // Delay for 10 minutes
