@@ -7,7 +7,7 @@
 #define LOG_ENTRY_NUM_BYTES (2)
 #define LOG_BUFFER_MAX_ELEMENTS (EEPROM_BYTES_PER_PAGE / LOG_ENTRY_NUM_BYTES)
 
-// Log header stored at the beginning of the EEPROM
+// Log header struct stored at the beginning of the EEPROM
 typedef struct {
     uint32_t writeOffset;
 } LogHeader;

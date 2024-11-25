@@ -45,29 +45,43 @@ int main(void)
 
   /*
   Assumptions:
-  - TMP100 address lines ADD0 and ADD1 are tied to ground, so the I2C address is 0b01001000 (0x48)
-  - 24FC address lines A0, A1, and A2 are tied to ground, so the I2C address is 0b10100000 (0xA0)
+  - TMP100 and 24FC share the same physical I2C bus.
+  - TMP100 address lines ADD0 and ADD1 are tied to ground, so the I2C address is 0b01001000 (0x48).
+  - 24FC address lines A0, A1, and A2 are tied to ground, so the I2C address is 0b10100000 (0xA0).
   - 24FC write protect line (WP) is tied to ground enable writing.
-  - Appropriate pull up on SDA line (2k-10k ohm)
+  - Appropriate pull up installed on SDA line (2k-10k ohm).
 
   Notes:
    - To minimize EEPROM wear, temp readings are buffered in RAM and then written to the EEPROM
      only once a full 64 byte page buffer has been populated (unless the user calls FlushBufferToEeprom())
+     With a 64 byte page using 2 bytes per sample collected every 10 mins, this is roughly 5.33 hours of buffering between EEPROM writes.
+
+   - The current implementation should allow for at least ~10 years of continous logging before the EEPROM
+     write limits are reached (limited by the first page with the header/write offset which gets updated every time
+     the 64 byte RAM buffer is completely filled and therefore flushed to the EEPROM).
+
+   - The EEPROM life can be extended by increasing the RAM buffer size or by implementing some form of wear leveling
+     on the EEPROM header.  Increasing the RAM buffer too much will expose more data to loss in the event of a power cycle,
+     so a balance must be struck between EEPROM wear and data loss risk.
 
    - The first page in the EEPROM is allocated to the header information which stores the write offset
      so that the logger can resume writing to the proper place in the event of a power interruption
 
    - Temperature is logged in raw counts (12-bit resolution) as a uint16_t to save space (vs a 32 bit float)
+     However, ConvertRawTempToDegC() is available to convert the raw temp to degrees C
+
    - Power cycles will cause logging to resume at the next available address in EEPROM (RTC would be needed to track time)
-   - Simple HAL delay used to keep code simple, but would use an RTOS or timer interrupt in a real application
+
+   - The code uses a simple HAL delay here to keep code simple, but generally one would use an RTOS or timer interrupt in a real application
+     in which the code was doing more than just reading/logging temperature data.
   */
 
   // Infinite loop
   while (1)
   {
-    // Attempt to read temperature from TMP100
+    // Read temperature from TMP100
     if (SUCCESS == tempSensor.ReadTemperature()) {
-      // Save raw temp to EEPROM
+      // Save raw temp measurement to EEPROM
       logger.AddTemperatureReading(tempSensor.GetTemperatureRaw());
     }
 

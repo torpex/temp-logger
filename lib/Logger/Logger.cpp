@@ -48,6 +48,8 @@ ErrorStatus Logger::EraseAllLogs() {
 
 // Adds a temperature reading to RAM buffer
 // If the RAM buffer is full, write it to EEPROM
+// Inputs: Raw temperature sample
+// Outputs: ErrorStatus (SUCCESS or ERROR)
 ErrorStatus Logger::AddTemperatureReading(int16_t rawTemperature) {
     if (_rawTempBufferIndex < LOG_BUFFER_MAX_ELEMENTS)
     {
@@ -71,6 +73,9 @@ ErrorStatus Logger::AddTemperatureReading(int16_t rawTemperature) {
     return SUCCESS;
 }
 
+// Gets a temperature reading from the EEPROM
+// Inputs: address of the reading, pointer to store the result
+// Outputs: ErrorStatus (SUCCESS or ERROR)
 ErrorStatus Logger::GetTemperatureReading(uint32_t* address, int16_t* result) {
     uint8_t data[LOG_ENTRY_NUM_BYTES];
 
@@ -88,6 +93,10 @@ ErrorStatus Logger::GetTemperatureReading(uint32_t* address, int16_t* result) {
     return SUCCESS;
 }
 
+// Flush RAM buffer to EEPROM
+// Useful if the user doesn't want to wait for the buffer to fill before saving the data
+// Inputs: None
+// Outputs: ErrorStatus (SUCCESS or ERROR)
 ErrorStatus Logger::FlushBufferToEeprom()
 {
     ErrorStatus status = ERROR;
@@ -101,6 +110,7 @@ ErrorStatus Logger::FlushBufferToEeprom()
 
 // Private methods
 
+// Helper function to write RAM buffer to EEPROM
 ErrorStatus Logger::writeBufferToEeprom() {
     if (NULL == _eeprom) {
         return ERROR;
@@ -122,6 +132,7 @@ ErrorStatus Logger::writeBufferToEeprom() {
     return SUCCESS;
 }
 
+// Helper function to read the EEPROM log header
 ErrorStatus Logger::readLogHeader() {
     ErrorStatus status;
     if (NULL == _eeprom) {
@@ -136,6 +147,7 @@ ErrorStatus Logger::readLogHeader() {
     return SUCCESS;
 }
 
+// Helper function to write the EEPROM log header
 ErrorStatus Logger::writeLogHeader() {
     ErrorStatus status;
 
