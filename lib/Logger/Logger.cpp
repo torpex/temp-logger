@@ -1,31 +1,41 @@
 #include "Logger.hpp"
 #include "Ti_Tmp100.hpp"
 #include <cstring>
+#include <iostream>
 
-// Public methods
+// Defines
+#define LOG_HEADER_ADDR (0)                     // Header starts on first page
+#define DATA_START_ADDR (EEPROM_BYTES_PER_PAGE) // Data starts on second page
 
+// Constructor
 Logger::Logger() {
     _eeprom = nullptr;
-    _currentAddress = 0;
 }
 
+// Initialize logger
+// Associates EEPROM device and reads the log header
+// Inputs: EEPROM handle
+// Outputs: ErrorStatus (SUCCESS or ERROR)
 ErrorStatus Logger::Init(Microchip_24FC* eeprom) {
     if (NULL == eeprom) {
         return ERROR;
     }
-
     _eeprom = eeprom;
-    ErrorStatus status = findNextFreeAddress(&_currentAddress);
+    ErrorStatus status = readLogHeader();
     if (status != SUCCESS) {
         return ERROR;
     }
     return SUCCESS;
 }
 
+// Erase all logs in EEPROM (including header information)
+// Inputs: None
+// Outputs: ErrorStatus (SUCCESS or ERROR)
 ErrorStatus Logger::EraseAllLogs() {
     uint8_t emptyData[EEPROM_BYTES_PER_PAGE] = {0xFF};
     ErrorStatus status;
 
+    _header.writeOffset = 0;
     for (uint32_t address = 0; address < _eeprom->GetSize(); address += EEPROM_BYTES_PER_PAGE) {
         status = _eeprom->Write(address, emptyData, EEPROM_BYTES_PER_PAGE);
         if (status != SUCCESS) {
@@ -33,24 +43,35 @@ ErrorStatus Logger::EraseAllLogs() {
         }
     }
 
-    _currentAddress = 0;
     return SUCCESS;
 }
 
-ErrorStatus Logger::WriteLogEntry(int16_t rawTemperature) {
-    uint8_t data[LOG_ENTRY_NUM_BYTES];
-    memcpy(data, &rawTemperature, sizeof(int16_t));
-    ErrorStatus status = _eeprom->Write(_currentAddress, data, sizeof(data));
+// Adds a temperature reading to RAM buffer
+// If the RAM buffer is full, write it to EEPROM
+ErrorStatus Logger::AddTemperatureReading(int16_t rawTemperature) {
+    if (_rawTempBufferIndex < LOG_BUFFER_MAX_ELEMENTS)
+    {
+        _rawTempBuffer[_rawTempBufferIndex++] = rawTemperature;
+        return SUCCESS;
+    }
+    else
+    {
+        ErrorStatus status = writeBufferToEeprom();
+        if (status != SUCCESS)
+        {
+            return ERROR;
+        }
 
-    if (status != SUCCESS) {
-        return ERROR;
+        // Clear buffer and add current measurement
+        _rawTempBufferIndex = 0;
+        memset(_rawTempBuffer, 0, sizeof(_rawTempBuffer));
+        _rawTempBuffer[_rawTempBufferIndex++] = rawTemperature;
     }
 
-    _currentAddress += sizeof(data);
     return SUCCESS;
 }
 
-ErrorStatus Logger::ReadLogEntry(uint32_t* address, int16_t* result) {
+ErrorStatus Logger::GetTemperatureReading(uint32_t* address, int16_t* result) {
     uint8_t data[LOG_ENTRY_NUM_BYTES];
 
     if (NULL == address || NULL == result) {
@@ -67,29 +88,65 @@ ErrorStatus Logger::ReadLogEntry(uint32_t* address, int16_t* result) {
     return SUCCESS;
 }
 
+ErrorStatus Logger::FlushBufferToEeprom()
+{
+    ErrorStatus status = ERROR;
+    if (_rawTempBufferIndex > 0)
+    {
+        status = writeBufferToEeprom();
+    }
+
+    return status;
+}
+
 // Private methods
 
-ErrorStatus Logger::findNextFreeAddress(uint32_t* address) {
-    uint8_t data[LOG_ENTRY_NUM_BYTES];
-    *address = 0;
-    ErrorStatus status;
-
-    if (NULL == address || NULL == _eeprom) {
+ErrorStatus Logger::writeBufferToEeprom() {
+    if (NULL == _eeprom) {
         return ERROR;
     }
 
-    for (uint32_t addr = 0; addr < _eeprom->GetSize(); addr += 2) {
-        status = _eeprom->Read(addr, data, sizeof(data));
-        if (status != SUCCESS) {
-            return ERROR;
-        }
+    // Write current buffer to EEPROM
+    ErrorStatus status = _eeprom->Write(_header.writeOffset, (uint8_t*)_rawTempBuffer, _rawTempBufferIndex * sizeof(uint16_t));
+    if (status != SUCCESS)
+    {
+        return ERROR;
+    }
+    _header.writeOffset += _rawTempBufferIndex * sizeof(uint16_t);
 
-        // Check if memory is empty (filled with 0xFFs)
-        if (data[0] == 0xFF && data[1] == 0xFF) {
-            *address = addr;
-            return SUCCESS;
-        }
+    status = writeLogHeader();
+    if (status != SUCCESS) {
+        return ERROR;
     }
 
-    return ERROR;
+    return SUCCESS;
+}
+
+ErrorStatus Logger::readLogHeader() {
+    ErrorStatus status;
+    if (NULL == _eeprom) {
+        return ERROR;
+    }
+
+    status = _eeprom->Read(LOG_HEADER_ADDR, (uint8_t *)&_header, sizeof(_header));
+    if (status != SUCCESS) {
+        return ERROR;
+    }
+
+    return SUCCESS;
+}
+
+ErrorStatus Logger::writeLogHeader() {
+    ErrorStatus status;
+
+    if (NULL == _eeprom) {
+        return ERROR;
+    }
+
+    status = _eeprom->Write(LOG_HEADER_ADDR, (uint8_t *)&_header, sizeof(_header));
+    if (status != SUCCESS) {
+        return ERROR;
+    }
+
+    return SUCCESS;
 }

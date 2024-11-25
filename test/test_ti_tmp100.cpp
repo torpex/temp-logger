@@ -1,7 +1,10 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "Ti_Tmp100.hpp"
-#include "mock_stm32f4xx_hal_i2c.h"
+#include "mock_stm32f4xx_hal_i2c.hpp"
+
+using ::testing::_;
+using ::testing::Return;
 
 extern MockHAL_I2C* mockHAL_I2C;
 
@@ -28,7 +31,6 @@ TEST_F(Tmp100Test, InitSuccess) {
     ErrorStatus status = tempSensor.Init(&i2cHandle, 0x48);
     EXPECT_EQ(status, SUCCESS);
 }
-
 
 TEST_F(Tmp100Test, InitFailure) {
     EXPECT_CALL(*mockHAL_I2C, HAL_I2C_Master_Transmit(nullptr, 0x48 << 1, testing::_, 2, HAL_MAX_DELAY))

@@ -1,4 +1,4 @@
-#include "mock_stm32f4xx_hal_i2c.h"
+#include "mock_stm32f4xx_hal_i2c.hpp"
 
 MockHAL_I2C* mockHAL_I2C = nullptr;
 

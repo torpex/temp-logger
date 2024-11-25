@@ -1,5 +1,6 @@
 #include "Microchip_24fc.hpp"
 #include <cstring>
+#include <iostream>
 
 #define MAX_WRITE_SIZE_BYTES (64)
 
@@ -23,7 +24,7 @@ ErrorStatus Microchip_24FC::Init(I2C_HandleTypeDef* i2cHandle, uint8_t address, 
 // Write data to EEPROM (max 64 bytes at a time)
 // Inputs: Memory address, data buffer, and size of data
 // Outputs: ErrorStatus (SUCCESS or ERROR)
-ErrorStatus Microchip_24FC::Write(uint16_t address, uint8_t* data, uint16_t size) {
+ErrorStatus Microchip_24FC::Write(uint32_t address, uint8_t* data, uint16_t size) {
     if (NULL == data || size > MAX_WRITE_SIZE_BYTES) {
         return ERROR;
     }
@@ -45,7 +46,7 @@ ErrorStatus Microchip_24FC::Write(uint16_t address, uint8_t* data, uint16_t size
 // Read data from EEPROM (max 64 bytes at a time)
 // Inputs: Memory address, target data pointer, and size of data
 // Outputs: ErrorStatus (SUCCESS or ERROR), read contents in data buffer
-ErrorStatus Microchip_24FC::Read(uint16_t address, uint8_t* data, uint16_t size) {
+ErrorStatus Microchip_24FC::Read(uint32_t address, uint8_t* data, uint16_t size) {
     if (NULL == data || size > MAX_WRITE_SIZE_BYTES) {
         return ERROR;
     }

@@ -82,7 +82,7 @@ float Ti_Tmp100::GetTemperatureDegC()
 // Convert raw temperature counts to degC (useful if reading raw temperature value from a file)
 // Inputs: rawTemperature - raw temperature counts from TMP100
 // Outputs: Temperature in degC
-float Ti_Tmp100::ConvertRawTempToDegC(uint16_t rawTemperature)
+float Ti_Tmp100::ConvertRawTempToDegC(int16_t rawTemperature)
 {
     return (float)rawTemperature * RAW_COUNTS_TO_DEG_C;  // Convert to Celsius
 }

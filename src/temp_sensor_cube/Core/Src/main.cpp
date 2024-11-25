@@ -43,16 +43,24 @@ int main(void)
   eeprom.Init(&hi2c1, EEPROM_I2C_ADDRESS, EEPROM_SIZE);
   logger.Init(&eeprom);
 
-  // Assumptions:
-  // 1) TMP100 address lines ADD0 and ADD1 are tied to ground, so the I2C address is 0b01001000 (0x48)
-  // 2) 24FC address lines A0, A1, and A2 are tied to ground, so the I2C address is 0b10100000 (0xA0)
-  // 3) 24FC write protect line (WP) is tied to ground enable writing.
-  // 4) Appropriate pull up on SDA line (2k-10k ohm)
+  /*
+  Assumptions:
+  - TMP100 address lines ADD0 and ADD1 are tied to ground, so the I2C address is 0b01001000 (0x48)
+  - 24FC address lines A0, A1, and A2 are tied to ground, so the I2C address is 0b10100000 (0xA0)
+  - 24FC write protect line (WP) is tied to ground enable writing.
+  - Appropriate pull up on SDA line (2k-10k ohm)
 
-  // Notes:
-  // 1) Temperature is logged in raw counts (12-bit resolution) as a uint16_t to save space (vs a 32 bit float)
-  // 2) Power cycles will cause logging to resume at the next available address in EEPROM (RTC would be needed to track time)
-  // 3) Simple HAL delay used to keep code simple, but would use an RTOS or timer interrupt in a real application
+  Notes:
+   - To minimize EEPROM wear, temp readings are buffered in RAM and then written to the EEPROM
+     only once a full 64 byte page buffer has been populated (unless the user calls FlushBufferToEeprom())
+
+   - The first page in the EEPROM is allocated to the header information which stores the write offset
+     so that the logger can resume writing to the proper place in the event of a power interruption
+
+   - Temperature is logged in raw counts (12-bit resolution) as a uint16_t to save space (vs a 32 bit float)
+   - Power cycles will cause logging to resume at the next available address in EEPROM (RTC would be needed to track time)
+   - Simple HAL delay used to keep code simple, but would use an RTOS or timer interrupt in a real application
+  */
 
   // Infinite loop
   while (1)
@@ -60,7 +68,7 @@ int main(void)
     // Attempt to read temperature from TMP100
     if (SUCCESS == tempSensor.ReadTemperature()) {
       // Save raw temp to EEPROM
-      logger.WriteLogEntry(tempSensor.GetTemperatureRaw());
+      logger.AddTemperatureReading(tempSensor.GetTemperatureRaw());
     }
 
     // Delay for 10 minutes
