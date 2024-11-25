@@ -3,7 +3,7 @@
 
 #include "stm32f4xx_hal.h"
 
-#define EEPROM_BYTES_PER_PAGE (256)
+#define EEPROM_BYTES_PER_PAGE (64)
 
 class Microchip_24FC {
 public:

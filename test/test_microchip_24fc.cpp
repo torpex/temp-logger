@@ -3,6 +3,9 @@
 #include "Microchip_24fc.hpp"
 #include "mock_stm32f4xx_hal_i2c.h"
 
+using ::testing::_;
+using ::testing::Return;
+
 extern MockHAL_I2C* mockHAL_I2C;
 
 class Microchip24FCTest : public ::testing::Test {

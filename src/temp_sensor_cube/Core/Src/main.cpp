@@ -50,9 +50,11 @@ int main(void)
   // 4) Appropriate pull up on SDA line (2k-10k ohm)
 
   // Notes:
-  // 1) Temperature is logged in raw counts (12-bit resolution) as a uint16_t to save space (vs a 32 bit float)
-  // 2) Power cycles will cause logging to resume at the next available address in EEPROM (RTC would be needed to track time)
-  // 3) Simple HAL delay used to keep code simple, but would use an RTOS or timer interrupt in a real application
+  // 1) Temperature data is buffered in RAM and then written to EEPROM periodically in 64 byte pages to minimize wear
+  // 2) The first page in the EEPROM is allocated to the header information (which stores the write offset)
+  // 3) Temperature is logged in raw counts (12-bit resolution) as a uint16_t to save space (vs a 32 bit float)
+  // 4) Power cycles will cause logging to resume at the next available address in EEPROM (RTC would be needed to track time)
+  // 5) Simple HAL delay used to keep code simple, but would use an RTOS or timer interrupt in a real application
 
   // Infinite loop
   while (1)
@@ -60,7 +62,7 @@ int main(void)
     // Attempt to read temperature from TMP100
     if (SUCCESS == tempSensor.ReadTemperature()) {
       // Save raw temp to EEPROM
-      logger.WriteLogEntry(tempSensor.GetTemperatureRaw());
+      logger.AddTemperatureReading(tempSensor.GetTemperatureRaw());
     }
 
     // Delay for 10 minutes

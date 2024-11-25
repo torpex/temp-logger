@@ -10,7 +10,7 @@ public:
     ErrorStatus ReadTemperature();
     int16_t GetTemperatureRaw();
     float GetTemperatureDegC();
-    float ConvertRawTempToDegC(uint16_t rawCounts);
+    float ConvertRawTempToDegC(int16_t rawTemperature);
 
 private:
     I2C_HandleTypeDef* _i2cHandle;
